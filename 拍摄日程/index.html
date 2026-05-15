@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="摄影看板">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f5f5f7">
+    <title>摄影项目看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div class="login" id="LS">
+        <div class="lbox">
+            <div class="ico">📷</div>
+            <h2>摄影项目看板</h2>
+            <p>输入管理员密码获取完整权限</p>
+            <div class="errtxt" id="errT">密码错误，请重试</div>
+            <input type="password" id="pwdI" placeholder="输入密码" autocomplete="off">
+            <button class="lbtn" onclick="doLogin()">登录</button>
+            <div class="guest" onclick="doGuest()">以访客身份查看 →</div>
+        </div>
+    </div>
+
+    <div class="app" id="APP">
+        <header class="hdr">
+            <div class="hdr-in">
+                <div class="hdr-l"><h1>📷 摄影看板</h1><span class="bdg" id="BDG"></span></div>
+                <div class="hdr-r">
+                    <button class="btn bs adm" onclick="toggleUpl()">📂 导入</button>
+                    <button class="btn bp adm" onclick="openAdd()">＋ 新建</button>
+                    <button class="bi adm" onclick="doExport()" title="导出">💾</button>
+                    <button class="bi adm" onclick="doClear()" title="清空">🗑️</button>
+                    <button class="bi" onclick="doLogout()" title="退出">🚪</button>
+                </div>
+            </div>
+        </header>
+
+z        <!-- 统计面板 -->
+        <div class="dash">
+            <div class="dash-g">
+                <div class="dc">
+                    <div class="dc-t">📊 进度总览</div>
+                    <div class="rw">
+                        <div class="rng">
+                            <svg viewBox="0 0 36 36">
+                                <circle class="rbg" cx="18" cy="18" r="14.5"/>
+                                <circle id="rP" cx="18" cy="18" r="14.5" stroke="#ff9500" stroke-dasharray="0 91.1"/>
+                                <circle id="rS" cx="18" cy="18" r="14.5" stroke="#007aff" stroke-dasharray="0 91.1"/>
+                                <circle id="rD" cx="18" cy="18" r="14.5" stroke="#34c759" stroke-dasharray="0 91.1"/>
+                            </svg>
+                            <div class="ct"><b id="rT">0</b><small>总计</small></div>
+                        </div>
+                        <div class="leg">
+                            <div class="leg-i"><div class="leg-d" style="background:#ff9500"></div>待拍摄<span class="leg-v" id="lP">0</span></div>
+                            <div class="leg-i"><div class="leg-d" style="background:#007aff"></div>拍摄中<span class="leg-v" id="lS">0</span></div>
+                            <div class="leg-i"><div class="leg-d" style="background:#34c759"></div>已交付<span class="leg-v" id="lD">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dc">
+                    <div class="dc-t">📅 本月业务</div>
+                    <div class="mg">
+                        <div class="mi"><b id="mD">0</b><small>已交付</small></div>
+                        <div class="mi"><b id="mA">0</b><small>进行中</small></div>
+                        <div class="mi"><b id="mW">0</b><small>待拍摄</small></div>
+                        <div class="mi"><b id="mT">0</b><small>本月总计</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视图切换 + 搜索 -->
+        <div class="toolbar">
+            <div class="toolbar-in">
+                <div class="view-tabs">
+                    <button class="vtab active" data-view="board" onclick="switchView('board')">📋 看板</button>
+                    <button class="vtab" data-view="table" onclick="switchView('table')">📄 表格</button>
+                    <button class="vtab" data-view="calendar" onclick="switchView('calendar')">📅 日历</button>
+                </div>
+                <div class="search-box">
+                    <input class="search-input" id="searchInput" placeholder="搜索项目..." oninput="doSearch()">
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传区 -->
+        <div class="upl" id="UPL">
+            <div class="upa" id="UPA">
+                <div class="ui">📊</div>
+                <div class="ut">拖拽 Excel 文件到此处</div>
+                <div class="ud">支持 .xlsx/.xls 自动识别列名</div>
+                <input type="file" id="FI" accept=".xlsx,.xls" style="display:none">
+            </div>
+        </div>
+
+        <!-- 看板视图 -->
+        <div class="view-panel active" id="viewBoard">
+            <div class="brd">
+                <div class="bg">
+                    <div>
+                        <div class="ch"><h3>🟠 待拍摄</h3><span class="cc" id="cP">0</span></div>
+                        <div class="ccards" id="colP"></div>
+                    </div>
+                    <div>
+                        <div class="ch"><h3>🔵 拍摄中</h3><span class="cc" id="cS">0</span></div>
+                        <div class="ccards" id="colS"></div>
+                    </div>
+                    <div>
+                        <div class="ch"><h3>🟢 已交付</h3><span class="cc" id="cD">0</span></div>
+                        <div class="ccards" id="colD"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格视图 -->
+        <div class="view-panel" id="viewTable">
+            <div class="tbl-wrap">
+                <div class="tbl-filter">
+                    <select class="fi tbl-sel" id="tblFilter" onchange="render()">
+                        <option value="all">全部状态</option>
+                        <option value="pending">待拍摄</option>
+                        <option value="shooting">拍摄中</option>
+                        <option value="delivered">已交付</option>
+                    </select>
+                </div>
+                <div class="tbl-scroll">
+                    <table class="tbl" id="dataTable">
+                        <thead>
+                            <tr><th>客户</th><th>区域</th><th>甲方</th><th>日期</th><th>设备</th><th>天数</th><th>状态</th><th class="adm">操作</th></tr>
+                        </thead>
+                        <tbody id="tblBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日历视图 -->
+        <div class="view-panel" id="viewCalendar">
+            <div class="cal-wrap">
+                <div class="cal-header">
+                    <button class="bi" onclick="calPrev()">◀</button>
+                    <span class="cal-title" id="calTitle">2024年1月</span>
+                    <button class="bi" onclick="calNext()">▶</button>
+                </div>
+                <div class="cal-grid">
+                    <div class="cal-weekdays">
+                        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                    </div>
+                    <div class="cal-days" id="calDays"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 新建/编辑弹窗 -->
+    <div class="mov" id="PM">
+        <div class="mdl">
+            <div class="mh"><h2 id="MT">新建项目</h2><button class="mx" onclick="closeM()">✕</button></div>
+            <div class="mb">
+                <div class="fg"><label class="fl">客户名称 *</label><input class="fi" id="fC" placeholder="XX地产"></div>
+                <div class="fr"><div class="fg"><label class="fl">区域</label><input class="fi" id="fA" placeholder="深圳南山"></div><div class="fg"><label class="fl">甲方</label><input class="fi" id="fP" placeholder="万科"></div></div>
+                <div class="fg"><label class="fl">制作要求</label><textarea class="fi ft" id="fR" placeholder="航拍全景+样板间"></textarea></div>
+                <div class="fr"><div class="fg"><label class="fl">拍摄天数</label><input class="fi" id="fD" type="number" min="1" placeholder="1"></div><div class="fg"><label class="fl">人数</label><input class="fi" id="fCr" type="number" min="1" placeholder="1"></div></div>
+                <div class="fg"><label class="fl">执行设备</label><input class="fi" id="fE" placeholder="御4 Pro, A7M4"></div>
+                <div class="fr"><div class="fg"><label class="fl">拍摄日期</label><input class="fi" id="fDt" type="date"></div><div class="fg"><label class="fl">状态</label><select class="fi" id="fS"><option value="pending">待拍摄</option><option value="shooting">拍摄中</option><option value="delivered">已交付</option></select></div></div>
+                <div class="fg"><label class="fl">备注</label><input class="fi" id="fN" placeholder="补充信息"></div>
+            </div>
+            <div class="mf"><button class="btn bs" onclick="closeM()">取消</button><button class="btn bp" onclick="saveP()">保存</button></div>
+        </div>
+    </div>
+
+    <!-- 映射弹窗 -->
+    <div class="mov" id="MM">
+        <div class="mdl">
+            <div class="mh"><h2>列名映射</h2><button class="mx" onclick="closeMM()">✕</button></div>
+            <div class="mb" id="MMB"></div>
+            <div class="mf"><button class="btn bs" onclick="closeMM()">取消</button><button class="btn bp" onclick="confirmMM()">确认导入</button></div>
+        </div>
+    </div>
+
+    <div class="toast" id="TT"></div>
+    <script src="app.js"></script>
+</body>
+</html>

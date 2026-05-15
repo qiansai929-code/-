@@ -1,0 +1,28 @@
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+.env.local
+.env.*.local
+
+# Misc
+.cache/
+dist/
+build/
+*.zip
+*.rar
